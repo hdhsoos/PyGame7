@@ -18,6 +18,7 @@ def terminate():
 
 name = input()
 if name == '':
+    print('Название карты не было введено')
     terminate()
 
 FPS = 50
