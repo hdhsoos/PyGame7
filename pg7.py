@@ -12,6 +12,13 @@ def load_image(name, colorkey=None):
         image = image.convert_alpha()
     return image
 
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+name = input()
+if name == '':
+    terminate()
 
 FPS = 50
 pygame.init()
@@ -22,10 +29,6 @@ screen.fill(pygame.Color('white'))
 clock = pygame.time.Clock()
 running = True
 
-
-def terminate():
-    pygame.quit()
-    sys.exit()
 
 
 def load_level(filename):
@@ -68,7 +71,6 @@ def start_screen():
                 return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
-
 
 start_screen()
 
@@ -148,7 +150,7 @@ def generate_level(level):
     return new_player, x, y
 
 #lvl = load_level('map2.txt')[:]
-lvl = load_level('map.txt')[:]
+lvl = load_level(name)[:]
 # мы будем использовать список lvl для перемещений (нерационально, но больше ничего в голову не пришло)
 player, level_x, level_y = generate_level(lvl)
 screen.fill((0, 0, 0))
