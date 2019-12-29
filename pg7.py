@@ -1,5 +1,17 @@
 import pygame, sys, os
 
+FPS = 50
+size = WIDTH, HEIGHT = 500, 500
+pygame.init()
+screen = pygame.display.set_mode(size)
+screen.fill(pygame.Color('white'))
+clock = pygame.time.Clock()
+tile_width = tile_height = 50
+player = None
+all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
+
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
@@ -12,38 +24,22 @@ def load_image(name, colorkey=None):
         image = image.convert_alpha()
     return image
 
+
 def terminate():
     pygame.quit()
     sys.exit()
 
-name = input()
-if not os.path.isfile("data/" + name):
-    print('Название карты не было введено')
-    terminate()
-
-FPS = 50
-pygame.init()
-size = WIDTH, HEIGHT = 500, 500
-# длина и ширина как отдельные переменные нужны далее для функции start_screen()
-screen = pygame.display.set_mode(size)
-screen.fill(pygame.Color('white'))
-clock = pygame.time.Clock()
-running = True
-
-
 
 def load_level(filename):
     filename = "data/" + filename
-
     with open(filename, 'r') as mapFile:
         level_map = [line.strip() for line in mapFile]
-
     max_width = max(map(len, level_map))
-
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
 def start_screen():
+    global screen, clock
     intro_text = ["ЗАСТАВКА", "",
                   "Правила игры",
                   "Нажимайте стрелочки,",
@@ -71,15 +67,15 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-start_screen()
 
+start_screen()
 tile_images = {'wall': load_image('box.png'), 'empty': load_image('grass.png')}
 player_image = load_image('mar.png', (0, 0, 0))
 
-tile_width = tile_height = 50
-
 
 class Tile(pygame.sprite.Sprite):
+    global tiles_group, all_sprites, tile_images, tile_width, tile_height
+
     def __init__(self, tile_type, pos_x, pos_y):
         self.pos_x = pos_x
         self.pos_y = pos_y
@@ -89,6 +85,8 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Player(pygame.sprite.Sprite):
+    global player_group, player_image
+
     def __init__(self, pos_x, pos_y):
         self.pos_x = pos_x
         self.pos_y = pos_y
@@ -109,32 +107,6 @@ class Player(pygame.sprite.Sprite):
         return (self.pos_x, self.pos_y)
 
 
-# класс камеры, который в этой задачке не нужен
-# class Camera:
-# зададим начальный сдвиг камеры
-# def __init__(self):
-#    self.dx = 0
-#    self.dy = 0
-
-# сдвинуть объект obj на смещение камеры
-# def apply(self, obj):
-#    obj.rect.x += self.dx
-#    obj.rect.y += self.dy
-
-# позиционировать камеру на объекте target
-# def update(self, target):
-#    self.dx = -(target.rect.x + target.rect.w // 2 - WIDTH // 2)
-#    self.dy = -(target.rect.y + target.rect.h // 2 - HEIGHT // 2)
-
-
-player = None
-# camera = Camera()
-
-all_sprites = pygame.sprite.Group()
-tiles_group = pygame.sprite.Group()
-player_group = pygame.sprite.Group()
-
-
 def generate_level(level):
     new_player, x, y = None, None, None
     for y in range(len(level)):
@@ -148,43 +120,52 @@ def generate_level(level):
                 new_player = Player(x, y)
     return new_player, x, y
 
-#lvl = load_level('map2.txt')[:]
-lvl = load_level(name)[:]
-# мы будем использовать список lvl для перемещений (нерационально, но больше ничего в голову не пришло)
-player, level_x, level_y = generate_level(lvl)
-screen.fill((0, 0, 0))
-# print(lvl) использовалось, чтобы наблюдать за перемещением персонажа без спрайтов (в списке)
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            x, y = player.coor()
-            # некрасивое изменение списка и update player-а
-            if event.key == pygame.K_LEFT:
-                if lvl[y][x - 1] == '.':
-                    lvl[y] = lvl[y][:x - 1] + '@' + lvl[y][x:]
-                    lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
-                    player.update(-1, 0)
-            if event.key == pygame.K_RIGHT:
-                if lvl[y][x + 1] == '.':
-                    lvl[y] = lvl[y][:x + 1] + '@' + lvl[y][x + 2:]
-                    lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
-                    player.update(1, 0)
-            if event.key == pygame.K_DOWN:
-                if lvl[y + 1][x] == '.':
-                    lvl[y + 1] = lvl[y + 1][:x] + '@' + lvl[y + 1][x + 1:]
-                    lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
-                    player.update(0, 1)
-            if event.key == pygame.K_UP:
-                if lvl[y - 1][x] == '.':
-                    lvl[y - 1] = lvl[y - 1][:x] + '@' + lvl[y - 1][x + 1:]
-                    lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
-                    player.update(0, -1)
-            # print(lvl) использовалось, чтобы наблюдать за перемещением персонажа без спрайтов (в списке)
-    all_sprites.draw(screen)
-    all_sprites.update()
-    # camera.update(player)
-    # for sprite in all_sprites:
-    #    camera.apply(sprite)
-    pygame.display.flip()
+
+# name = input()
+# if not os.path.isfile("data/" + name):
+#    print('Название карты не было введено')
+#    terminate()
+def main(*args):
+    if len(args) == 1:
+        if not os.path.isfile("data/" + args[0]):
+            print('Название карты не было введено')
+            terminate()
+        else:
+            lvl = load_level(args[0])[:]
+    # мы будем использовать список lvl для перемещений (нерационально, но больше ничего в голову не пришло)
+    player, level_x, level_y = generate_level(lvl)
+    screen.fill((0, 0, 0))
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if event.type == pygame.KEYDOWN:
+                x, y = player.coor()
+                # некрасивое изменение списка и update player-а
+                if event.key == pygame.K_LEFT:
+                    if lvl[y][x - 1] == '.':
+                        lvl[y] = lvl[y][:x - 1] + '@' + lvl[y][x:]
+                        lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
+                        player.update(-1, 0)
+                if event.key == pygame.K_RIGHT:
+                    if lvl[y][x + 1] == '.':
+                        lvl[y] = lvl[y][:x + 1] + '@' + lvl[y][x + 2:]
+                        lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
+                        player.update(1, 0)
+                if event.key == pygame.K_DOWN:
+                    if lvl[y + 1][x] == '.':
+                        lvl[y + 1] = lvl[y + 1][:x] + '@' + lvl[y + 1][x + 1:]
+                        lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
+                        player.update(0, 1)
+                if event.key == pygame.K_UP:
+                    if lvl[y - 1][x] == '.':
+                        lvl[y - 1] = lvl[y - 1][:x] + '@' + lvl[y - 1][x + 1:]
+                        lvl[y] = lvl[y][:x] + '.' + lvl[y][x + 1:]
+                        player.update(0, -1)
+        all_sprites.draw(screen)
+        all_sprites.update()
+        pygame.display.flip()
+
+
+main('map2.txt')
